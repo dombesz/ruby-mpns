@@ -79,6 +79,8 @@ protected
         xml.tag!('wp:BackBackgroundImage') { xml.text!(options[:back_background_image] || '') }
         xml.tag!('wp:BackTitle') { xml.text!(options[:back_title] || '') }
         xml.tag!('wp:BackContent') { xml.text!(options[:back_content] || '') }
+        xml.tag!('wp:WideBackBackgroundImage') {xml.text!(options[:wide_backbackground_image])||''}
+        xml.tag!('wp:WideBackContent') {xml.text!(options[:wide_back_content])||''}
       end
     end
     [xml.target!, '1']

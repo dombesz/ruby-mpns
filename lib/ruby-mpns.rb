@@ -3,7 +3,10 @@ require 'net/http'
 require 'uri'
 
 module MicrosoftPushNotificationService
-
+  class << self
+    attr_accessor :cert_file, :use_ssl
+    def configure(&blck); class_eval(&blck); end
+  end
   def self.extended(base)
     unless base.respond_to?(:device_uri)
       base.class.class_eval do
@@ -23,14 +26,13 @@ module MicrosoftPushNotificationService
     type = safe_type_to_sym(type)
     notification, notification_class = build_notification(type, options)
     uri = URI.parse(self.device_uri)
-
+    puts notification.inspect
     request = Net::HTTP::Post.new(uri.request_uri)
     request.content_type = 'text/xml'
     request['X-WindowsPhone-Target'] = type.to_s if type.to_sym != :raw
     request['X-NotificationClass'] = notification_class
     request.body = notification
     request.content_length = notification.length
-
     Net::HTTP.start(uri.host, uri.port) { |http| http.request request }
   end
 
@@ -73,14 +75,14 @@ protected
     xml.instruct!
     xml.tag!('wp:Notification', 'xmlns:wp' => 'WPNotification') do
       xml.tag!('wp:Tile', uri.nil? ? {} : {'Id' => uri}) do
-        xml.tag!('wp:BackgroundImage') { xml.text!(options[:background_image] || '') }
-        xml.tag!('wp:Count') { xml.text!(options[:count].to_s || '') }
-        xml.tag!('wp:Title') { xml.text!(options[:title] || '') }
-        xml.tag!('wp:BackBackgroundImage') { xml.text!(options[:back_background_image] || '') }
-        xml.tag!('wp:BackTitle') { xml.text!(options[:back_title] || '') }
-        xml.tag!('wp:BackContent') { xml.text!(options[:back_content] || '') }
-        xml.tag!('wp:WideBackBackgroundImage') {xml.text!(options[:wide_backbackground_image])||''}
-        xml.tag!('wp:WideBackContent') {xml.text!(options[:wide_back_content])||''}
+        xml.tag!('wp:BackgroundImage', options[:background_image].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:background_image] || '') }
+        xml.tag!('wp:Count', options[:count].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:count].to_s || '') }
+        xml.tag!('wp:Title', options[:title].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:title] || '') }
+        xml.tag!('wp:BackBackgroundImage', options[:back_background_image].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:back_background_image] || '') }
+        xml.tag!('wp:BackTitle', options[:back_title].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:back_title] || '') }
+        xml.tag!('wp:BackContent', options[:back_content].nil? ? {"Action"=>"Clear"} :{}) { xml.text!(options[:back_content] || '') }
+        xml.tag!('wp:WideBackBackgroundImage', options[:wide_backbackground_image].nil? ? {"Action"=>"Clear"} :{}) {xml.text!(options[:wide_backbackground_image] ||'')}
+        xml.tag!('wp:WideBackContent', options[:wide_back_content].nil? ? {"Action"=>"Clear"} :{}) {xml.text!(options[:wide_back_content] ||'')}
       end
     end
     [xml.target!, '1']
